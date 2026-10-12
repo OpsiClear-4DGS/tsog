@@ -4,17 +4,18 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "opsiclear-tsog"
-version = "0.1.0"
+version = "1.0.0"
 description = "Independent TSOG playback profile specification and vectorized reference codec"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "OpsiClear-4DGS" }]
-dependencies = ["numpy>=2,<3", "Pillow>=11,<13"]
+dependencies = []
 keywords = ["tsog", "4dgs", "gaussian-splatting", "sog", "freetimegs"]
 
 [project.optional-dependencies]
+codec = ["numpy>=2,<3", "Pillow>=11,<13"]
 test = ["jsonschema>=4,<5"]
 
 [project.urls]

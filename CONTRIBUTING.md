@@ -1,12 +1,21 @@
 # Contributing
 
-Install `python -m pip install -e '.[test]'`, then run:
+Install `python -m pip install -e '.[codec,test]'`, then run:
 
 ```bash
 python -m unittest discover -s tests -v
 python tools/create-fixtures.py /tmp/tsog-fixtures
 tsog validate examples/slop-example.tsog --full --require-profile
 ```
+
+The core-only checks also run without optional packages:
+
+```bash
+python -m unittest discover -s tests -p 'test_core.py' -v
+```
+
+They launch an isolated interpreter without site packages to verify metadata,
+ZIP validation and byte-preserving packaging independently of NumPy/Pillow.
 
 For browser conformance, install the optional test requirements in
 `tests/browser-requirements.txt`, install Chromium with Playwright, and run

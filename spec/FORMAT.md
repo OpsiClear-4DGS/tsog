@@ -1,13 +1,14 @@
-# TSOG Playback Profile 1 — Format Specification
+# TSOG Version 1 — Format Specification
 
-Document revision **1.0.2**, 2026-10-12. Maintainer: **OpsiClear-4DGS**.
-Status: stable description of base encoding **4**, playback profile **1**.
+Specification release **1.0.0**, 2026-10-12. Maintainer: **OpsiClear-4DGS**.
+Status: first release, file version **1**, playback profile **1**.
 SPDX-License-Identifier: Apache-2.0.
 
 ## 1. Scope and conformance
 
-This specification defines a portable subset of Xiaomi Research's packaged
-TSOG v4 encoding and OpsiClear's playback/audio additions. Its spatial encoding
+This specification defines OpsiClear TSOG version 1, using a portable subset of
+Xiaomi Research's v4 attribute layout and OpsiClear's playback/audio additions.
+Readers also support legacy Xiaomi v4 imports. Its spatial encoding
 follows PlayCanvas SOG conventions. It defines interchange semantics; camera
 navigation, training, antialiasing, tone mapping and rendering hardware are
 outside its scope. It does not claim support for every temporal parameterization
@@ -21,13 +22,15 @@ A conforming writer emits the identifiers below and satisfies every byte,
 metadata and cross-field requirement. Passing JSON Schema alone is insufficient.
 
 ```json
-{"version":4,"profile":{"id":"org.opsiclear.tsog-playback","version":1}}
+{"version":1,"profile":{"id":"org.opsiclear.tsog-playback","version":1}}
 ```
 
-The root version describes attribute bytes; the profile describes playback
-semantics. Unsupported values MUST fail rather than be guessed. Readers MUST
-also accept otherwise supported legacy v4 files without `profile`. Such a file
-is not a profile declaration; strict validators MAY require an explicit marker.
+The root version identifies this file format; the profile identifies its playback
+semantics. Version 1 MUST include the profile ID and version shown above.
+Unsupported values and unmarked version-1 files MUST fail rather than be guessed.
+Readers MUST also accept otherwise supported legacy Xiaomi `version: 4` files
+without `profile`. Such a file is not a profile declaration; strict validators
+MAY require an explicit marker.
 Unknown optional metadata is ignored and SHOULD survive metadata-only edits.
 Unknown keys inside `temporal` MUST fail: silently dropping animated attributes
 would change the scene. An additive annotation may keep profile 1; a new required
@@ -91,7 +94,7 @@ including covariance, MUST remain finite when converted to float32.
 
 | Member | Requirement |
 | --- | --- |
-| `version`, `profile` | Identification in §1 |
+| `version`, `profile` | Version 1 with profile 1; legacy Xiaomi version 4 imports as defined in §1 |
 | `count` | Integer 1…9,007,199,254,740,991; actual non-padding points |
 | `means` | `mins`/`maxs`: three numbers each; two files, low byte then high |
 | `scales` | Scalar codebook; one file |
@@ -312,5 +315,8 @@ support or sample-accurate audiovisual latency.
 - [Implementation and conformance checks](../docs/IMPLEMENTATION.md)
 
 This document is independently written. It supersedes the player repository's
-description as this project's specification without changing encoded v4 bytes
-or the profile-1 identifier.
+description as this project's specification. Migrating a supported legacy v4
+file to version 1 changes its metadata declaration and ZIP container; attribute
+images and retained audio can remain byte-for-byte unchanged. No array library
+is part of the format: implementations may use typed buffers with the specified
+shapes and numeric conventions.

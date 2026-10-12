@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Metadata semantics for the OpsiClear playback profile (base encoding v4)."""
+"""TSOG version 1 semantics, with explicit legacy Xiaomi v4 compatibility."""
 import math
 import re
 
@@ -59,13 +59,13 @@ def group(meta, key, files, ranges=None, book=False):
 
 
 def validate_metadata(meta, require_profile=False):
-    if not isinstance(meta, dict) or type(meta.get("version")) not in (int, float) or meta["version"] != 4:
-        raise ValueError("Only base encoding version 4 is supported")
+    if not isinstance(meta, dict) or type(meta.get("version")) not in (int, float) or meta["version"] not in (1, 4):
+        raise ValueError("Only TSOG version 1 and legacy Xiaomi version 4 are supported")
     profile = meta.get("profile")
     if "profile" in meta:
         if not isinstance(profile, dict) or profile.get("id") != PROFILE["id"] or type(profile.get("version")) not in (int, float) or profile["version"] != 1:
             raise ValueError("Unsupported playback profile")
-    elif require_profile:
+    elif require_profile or meta["version"] == 1:
         raise ValueError("An explicit playback profile is required")
     number(meta.get("count"), "count", 1, integer=True)
     group(meta, "means", (2,), ranges=3)

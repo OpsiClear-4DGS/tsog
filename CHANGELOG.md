@@ -1,12 +1,16 @@
 # Changelog
 
-## 0.1.0 — 2026-10-12
+## 1.0.0 — 2026-10-12
 
 - Establish the independent Apache-2.0 format repository.
-- Formalize v4 / playback profile 1 in specification document revision 1.0.2.
+- Define file version 1 and playback profile 1 in specification release 1.0.0.
+- Read supported legacy Xiaomi version-4 files without relabeling their source.
 - Add vectorized Python encoding/decoding, structural/full validation and
   byte-preserving audio packaging.
 - Add dependency-free browser decoding and independent conformance examples.
-- Preserve the 2M Slop Example and its checksum/provenance.
+- Keep the Python core dependency-free; make NumPy/Pillow an optional codec.
+- Expose decoded attributes through standard buffer views.
+- Package the 2M Slop Example as version 1, preserving attribute/audio bytes and
+  recording its original container checksum in provenance.
 
-This release does not change base encoding 4 or playback profile 1.
+This is the first release of the independent OpsiClear format and toolkit.

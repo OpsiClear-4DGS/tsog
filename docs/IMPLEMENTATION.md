@@ -2,13 +2,14 @@
 
 The [format](../spec/FORMAT.md) is normative. These independently authored
 reference implementations demonstrate the supported profile; the renderer is
-deliberately separate. Python supports 3.10+, NumPy 2 and Pillow 11–12.
+deliberately separate. The Python core supports 3.10+ and uses only the standard
+library. The optional fast codec uses NumPy 2 and Pillow 11–12.
 The browser example needs ES modules, `DecompressionStream('deflate-raw')`,
 `createImageBitmap` and OffscreenCanvas WebGL2. Serve modules over HTTP(S).
 
 ## Python data model
 
-Install with `python -m pip install -e '.[test]'`. The public API is `Scene`,
+Install with `python -m pip install -e '.[codec,test]'`. The public API is `Scene`,
 `encode`, `decode`, `evaluate`, `validate`, `repackage`, `Archive`,
 `validate_metadata`, `webp_dimensions` and `timing`.
 
@@ -26,6 +27,11 @@ Install with `python -m pip install -e '.[test]'`. The public API is `Scene`,
 | `sh_labels` | uint16 N, optional | Index into `sh_palette` |
 | `audio` | bytes or None | Original soundtrack bytes |
 | `metadata` | dict | Original root metadata |
+
+`Scene` is a backend-neutral record. Encoder inputs can be nested numeric
+sequences or shaped buffer/array objects; the optional codec converts them to
+its working arrays. The table describes the packed layout of decoded data,
+not a requirement to use a particular array class.
 
 `decode` consumes every referenced attribute and CRC-checks the soundtrack.
 `include_audio=False` discards the audio after checking it. It does not render
@@ -47,6 +53,31 @@ if scene.sh_palette is not None:
 canonical center and fade with a Gaussian envelope. Discrete points are selected
 by exact frame membership. Static points remain unchanged. No viewer cutoff or
 opacity floor is inserted.
+
+## Generic attribute buffers
+
+Consumers can use the standard Python buffer protocol rather than NumPy's API:
+
+```python
+from tsog import decode  # Requires the optional [codec] extra.
+
+scene = decode("scene.tsog")
+view = scene.as_buffers()["positions"]
+print(view.format, view.itemsize, view.shape)  # 'f', 4, (N, 3)
+raw = view.cast("B")  # Byte view of the same storage; no copy.
+```
+
+Float attributes use native-endian float32 (`f`); frame IDs and palette labels
+use native-endian uint16 (`H`). Views are read-only by default and retain their
+storage owner. They are views, not immutable snapshots: changes through another
+alias remain visible. Use `as_buffers(readonly=False)` to preserve the source
+buffer's write permissions. A nested list is a valid encoding input but cannot
+provide a packed view until converted to buffer-backed storage.
+
+`Scene`, `Archive`, metadata/timing helpers, structural `validate` and `repackage`
+work without NumPy or Pillow. `decode`, `encode`, `evaluate` and full decoded
+validation use the optional codec. Browser consumers receive standard typed
+arrays; native or WASM consumers can use the same attribute layout.
 
 ## Writing a scene
 

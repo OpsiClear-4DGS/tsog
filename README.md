@@ -24,9 +24,12 @@ and implementation guidance. This is not an official Xiaomi or PlayCanvas releas
 | View-dependent color | SH degrees 0–3; shared higher-SH palette |
 | Playback | Duration, FPS hint, 0.25–4× speed, loop default |
 | Embedded audio | One track, synchronized to the scene's media clock |
-| Compatibility | Legacy v4 imports and explicit playback profile 1 |
+| Compatibility | TSOG version 1 with playback profile 1; legacy Xiaomi v4 imports |
 
-The codec uses NumPy arrays and native lossless WebP. Position decoding uses
+The format describes typed buffers, shapes and numeric conventions independently
+of any array library. The Python core uses only the standard library; its optional
+fast codec uses NumPy and Pillow and exposes decoded attributes through standard
+`memoryview` buffers. The browser codec uses typed arrays. Position decoding uses
 per-axis 16-bit lookup tables; SH stays in a shared palette instead of allocating
 45 coefficients for every point. Encoding uses vectorized quantization and a
 bounded WebP worker pool. Updating audio/defaults preserves every attribute
@@ -72,7 +75,7 @@ physical length unit.
 
 | Member | Meaning |
 | --- | --- |
-| `version` | Base attribute encoding; this profile uses `4`. |
+| `version` | `1` for this first release; `4` is accepted for legacy Xiaomi imports. |
 | `profile` | `{"id":"org.opsiclear.tsog-playback","version":1}` for new files. |
 | `count` | Number of valid Gaussian rows, excluding image padding. |
 | `means` | Three-axis signed-log `mins`/`maxs` and two low/high image references. |
@@ -136,7 +139,7 @@ images and nonempty audio entry.
 
 ```json
 {
-  "version": 4,
+  "version": 1,
   "profile": { "id": "org.opsiclear.tsog-playback", "version": 1 },
   "count": 1,
   "means": {
@@ -164,9 +167,12 @@ images and nonempty audio entry.
 
 ### 5. Versioning and compatibility
 
-Base encoding `version: 4` and playback `profile.version: 1` are separate
-identifiers. New writers include both; readers also accept supported legacy v4
-files without a profile marker. PlayCanvas SOG version 2 is a separate format.
+This first release uses file `version: 1`, playback `profile.version: 1` and
+toolkit/specification version `1.0.0`. New files require the profile ID
+`org.opsiclear.tsog-playback`. Readers also accept Xiaomi's legacy `version: 4`
+attribute layout, including files without a profile marker. An unmarked
+version-1 file is rejected to avoid confusing formats with the same number.
+PlayCanvas SOG version 2 is a separate format.
 Unsupported versions fail explicitly. Optional annotations can be ignored, but
 unknown temporal attributes are rejected to avoid silently discarding motion.
 See the [compatibility guide](docs/COMPATIBILITY.md) and
@@ -177,7 +183,7 @@ See the [compatibility guide](docs/COMPATIBILITY.md) and
 Python 3.10+; install from this checkout:
 
 ```bash
-python -m pip install -e '.[test]'
+python -m pip install -e '.[codec,test]'
 tsog validate examples/slop-example.tsog --full --require-profile
 python examples/encode.py /tmp/demo.tsog
 python examples/decode.py examples/slop-example.tsog
@@ -190,9 +196,17 @@ from tsog import decode, evaluate
 scene = decode("scene.tsog")
 positions, opacity = evaluate(scene, 0.5)
 print(scene.count, scene.attribute_bytes)
+positions_buffer = scene.as_buffers()["positions"]
+print(positions_buffer.format, positions_buffer.shape)  # 'f', (N, 3)
 # Higher SH for point i: scene.sh_palette[scene.sh_labels[i]].
 # Expand individual coefficients only where the consumer needs them.
 ```
+
+Use `pip install .` for the core metadata, ZIP validation and packaging tools
+without NumPy or Pillow. `decode`, `encode`, `evaluate` and `validate --full`
+need the optional `[codec]` extra. `Scene` also accepts nested numeric sequences
+or shaped buffers as encoder inputs; consumers can use its
+[generic attribute buffers](docs/IMPLEMENTATION.md#generic-attribute-buffers).
 
 Add a soundtrack without decoding/re-encoding the splats:
 

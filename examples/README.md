@@ -11,18 +11,20 @@ Hope Jensen is okay with it.
 
 The retained 2,000,000-point reconstruction contains degree-3 SH, 65,536 shared
 centroids, 121 source timestamps at 24 fps, five seconds of continuous animation
-and one embedded M4A track. Container size: **45,106,423 bytes**.
+and one embedded M4A track. Version-1 container size: **45,092,406 bytes**.
 
 ```text
-SHA-256 df27dd645ebed2fd553973e4b0da8fcf2caf7138711a8e76910d61adacd33f05
+SHA-256 7448cb911937cf4570c94e24c1002fdf6d16eb7594c35ebc0fa3f47c303640bc
 ```
 
-It is byte-for-byte the previous `jensen-2m.tsog` from
+Its attribute images and audio are byte-for-byte those of `jensen-2m.tsog` from
 [sam3dbx4danyone](https://github.com/OpsiClear-4DGS/sam3dbx4danyone):
 Original Base36 Jensen, 2M zero-velocity cold initialization, original 1M
 movement units, fitting seed 2042; checkpoint checksum and study are in the
 manifest. Slop Example is its display name. The source dataset name is retained
-for reproducible provenance.
+for reproducible provenance. Only the format declaration and ZIP packaging were
+updated for version 1; all decoded attributes are unchanged. The manifest also
+records the original version-4 container checksum.
 
 This is generated multiview reconstruction data, not a captured physical ground
 truth or reference geometry. Its media and audio retain original rights;

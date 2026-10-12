@@ -3,9 +3,17 @@
 | Producer / consumer | Relationship |
 | --- | --- |
 | Xiaomi Research TSOG at a58102d | Reference base-v4 layout; legacy files need not contain our profile marker |
-| OpsiClear TSOG writer | Emits base v4 and playback profile 1; uniform or caller-supplied scalar books |
+| OpsiClear TSOG writer | Emits version 1 and playback profile 1; uniform or caller-supplied scalar books |
 | FTGS Player | Separate AGPL reader/player supporting this profile and legacy v4 |
-| PlayCanvas SOG | Spatial ancestry; SOG version 2 and TSOG version 4 are distinct encodings |
+| PlayCanvas SOG | Spatial ancestry; SOG version 2 is distinct from OpsiClear TSOG 1 and Xiaomi TSOG 4 |
+
+New files use `version: 1` and require the profile ID
+`org.opsiclear.tsog-playback` with profile version 1. The toolkit and
+specification are both `1.0.0`. Xiaomi's `version: 4` denotes its original
+encoding, not a later OpsiClear release. Its supported attribute layout is
+also accepted as a legacy import. Unmarked version-1 files are rejected.
+The format is independent of NumPy or any other array library; implementations
+can expose the defined attributes as typed buffers.
 
 Do not change a SOG/PLY extension to make it temporal. Do not apply a sigmoid to
 TSOG opacity, exponentiate temporal sigma, treat motion as units per second,
@@ -25,5 +33,7 @@ profile version. Camera bookmarks in the example's sidecar are presentation
 data, not an undeclared core-format extension.
 
 Existing player URLs and `jensen-2m` identifiers remain valid. The standalone
-format repository names the same binary `slop-example.tsog` and displays it as
-**Slop Example**. Its SHA-256 is unchanged.
+format repository names the model `slop-example.tsog` and displays it as
+**Slop Example**. Version-1 packaging updates metadata and the container checksum;
+attribute images and audio remain unchanged. Its manifest records the original
+version-4 container checksum alongside the current checksum.

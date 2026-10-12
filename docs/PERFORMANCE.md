@@ -6,6 +6,10 @@ with warm filesystem cache. The optional browser run uses Chromium
 153.0.8010.12, headless SwiftShader. No network, training or scene rendering is
 included in decode times.
 
+These measurements used the original version-4 example container. The version-1
+release updates metadata/ZIP packaging only; every encoded image, audio byte
+and decoded attribute hash was verified unchanged.
+
 | Operation | Input | Time | Memory / output |
 | --- | --- | ---: | --- |
 | Python full attribute decode and referenced CRC checks | Slop Example, 2M points, degree-3 SH, audio | **0.922 s** | 167.8 MB arrays; ~376 MB process peak |

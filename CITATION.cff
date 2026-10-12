@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "Please credit the original FreeTimeGS and TSOG research, PlayCanvas tools, and this independent playback-profile implementation."
 title: "OpsiClear TSOG playback profile and reference codec"
 type: software
-version: 0.1.0
+version: 1.0.0
 date-released: 2026-10-12
 license: Apache-2.0
 repository-code: "https://github.com/OpsiClear-4DGS/tsog"

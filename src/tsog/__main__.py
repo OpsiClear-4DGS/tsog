@@ -10,6 +10,7 @@ from .package import validate, repackage
 
 def main():
     parser = argparse.ArgumentParser(description="TSOG playback profile tools")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
     commands = parser.add_subparsers(dest="command", required=True)
     inspect = commands.add_parser("inspect", help="Read metadata and ZIP record headers")
     inspect.add_argument("file")
@@ -42,7 +43,7 @@ def main():
             result = repackage(args.source, args.destination, playback=playback, audio=args.audio,
                                mime_type=args.mime_type, remove_audio=args.remove_audio)
         print(json.dumps(result, indent=2, allow_nan=False))
-    except (ValueError, OSError, KeyError, OverflowError) as error:
+    except (ValueError, OSError, KeyError, OverflowError, ImportError) as error:
         print(f"TSOG: {error}", file=sys.stderr)
         return 1
     return 0

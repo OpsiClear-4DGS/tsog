@@ -43,7 +43,7 @@ def validate(source, *, full=False, require_profile=False):
                   "timing": timing(meta), "dimensions": dimensions,
                   "validation": "container, CRCs, metadata and lossless image headers"}
     if full:
-        from .codec import decode
+        from . import decode
         scene = decode(source, include_audio=False)
         report["validation"] += ", all attribute values"
         report["attribute_bytes"] = scene.attribute_bytes
@@ -58,6 +58,7 @@ def repackage(source, destination, *, playback=None, audio=None, mime_type=None,
         raise ValueError("Cannot add and remove audio together")
     with Archive(source) as original:
         meta = deepcopy(original.meta)
+        meta["version"] = 1
         meta["profile"] = dict(PROFILE)
         if playback is not None:
             meta["playback"] = {**meta.get("playback", {}), **playback}

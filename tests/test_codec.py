@@ -167,7 +167,7 @@ class CodecTests(unittest.TestCase):
         local += struct.pack("<3I", crc, len(data), len(data))
         directory = struct.pack("<I6H3I5H2I", 0x02014b50, 20, 20, 8, 0, 0, 0, crc, len(data), len(data), len(name), 0, 0, 0, 0, 0, 0)+name
         end = struct.pack("<I4H2IH", 0x06054b50, 0, 0, 1, 1, len(directory), len(local), 0)
-        with self.assertRaisesRegex(ValueError, "base encoding"):
+        with self.assertRaisesRegex(ValueError, "version"):
             Archive(local+directory+end)  # Descriptor accepted; metadata is intentionally invalid.
 
     def test_audio_packaging_preserves_all_attribute_bytes(self):
@@ -259,6 +259,46 @@ class CodecTests(unittest.TestCase):
         meta["temporal"]["scale"] = {}
         with self.assertRaises(jsonschema.ValidationError):
             jsonschema.validate(meta, schema)
+
+    def test_version1_requires_identity_and_legacy_v4_remains_readable(self):
+        meta, entries = analytic()
+        old = decode(bundle(meta, entries))
+        meta["version"] = 1
+        schema = json.loads((Path(__file__).resolve().parents[1]/"spec/profile.schema.json").read_text())
+        with self.assertRaises(jsonschema.ValidationError):
+            jsonschema.validate(meta, schema)
+        with self.assertRaises(ValueError):
+            decode(bundle(meta, entries))
+        meta["profile"] = {"id": "org.opsiclear.tsog-playback", "version": 1}
+        jsonschema.validate(meta, schema)
+        current = decode(bundle(meta, entries))
+        for key in current.as_buffers():
+            np.testing.assert_array_equal(getattr(current, key), getattr(old, key))
+        path = self.root/"v1.tsog"
+        written = encode(scene(), path)
+        self.assertEqual(written["version"], 1)
+        self.assertEqual(written["profile"]["version"], 1)
+
+    def test_generic_sequence_inputs_and_zero_copy_buffer_views(self):
+        original = scene()
+        generic = deepcopy(original)
+        for key in original.as_buffers():
+            setattr(generic, key, getattr(original, key).tolist())
+        path = self.root/"sequences.tsog"
+        encode(generic, path)
+        decoded = decode(path)
+        readonly = decoded.as_buffers()
+        self.assertEqual(readonly["positions"].shape, (17, 3))
+        self.assertEqual(readonly["positions"].format, "f")
+        self.assertTrue(readonly["positions"].readonly)
+        self.assertEqual(sum(v.nbytes for v in readonly.values()), decoded.attribute_bytes)
+        writable = decoded.as_buffers(readonly=False)["positions"]
+        writable[0, 0] = 9
+        self.assertEqual(decoded.positions[0, 0], 9)
+        self.assertEqual(readonly["positions"][0, 0], 9)
+        positions, opacity = evaluate(generic, .25)
+        self.assertEqual(positions.shape, (17, 3))
+        self.assertEqual(opacity.shape, (17,))
 
 
 if __name__ == "__main__":

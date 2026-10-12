@@ -35,5 +35,5 @@ Those assets retain their original rights and are excluded from the Apache
 license. See examples/README.md for provenance and permitted scope. No new
 commercial rights in the example media are granted by this repository.
 
-Runtime dependencies NumPy and Pillow retain their respective licenses.
+Optional codec dependencies NumPy and Pillow retain their respective licenses.
 See docs/ATTRIBUTION.md.

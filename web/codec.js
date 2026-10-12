@@ -59,10 +59,10 @@ function audioMime(audio) {
   return mime;
 }
 export function validateMetadata(meta, { requireProfile = false } = {}) {
-  if (!object(meta) || meta.version !== 4) fail("unsupported base version");
+  if (!object(meta) || ![1, 4].includes(meta.version)) fail("unsupported format version");
   if (meta.profile !== undefined) {
     if (!object(meta.profile) || meta.profile.id !== "org.opsiclear.tsog-playback" || meta.profile.version !== 1) fail("unsupported profile");
-  } else if (requireProfile) fail("missing explicit profile");
+  } else if (requireProfile || meta.version === 1) fail("missing explicit profile");
   number(meta.count, "point count", 1, Number.MAX_SAFE_INTEGER, true);
   group(meta, "means", 2, 2, 3);
   group(meta, "scales", 1, 1, undefined, true);

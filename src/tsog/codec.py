@@ -5,7 +5,6 @@ Higher SH stays in a shared palette. The writer accepts a trained palette and
 labels; it intentionally does not invent a clustering or training algorithm.
 """
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
 from io import BytesIO
 import math
 import os
@@ -19,31 +18,7 @@ from PIL import Image
 
 from .archive import Archive, webp_dimensions
 from .metadata import PROFILE, MAX_FLOAT, validate_metadata, number, audio_mime
-
-
-@dataclass
-class Scene:
-    positions: np.ndarray
-    scales: np.ndarray
-    quaternions: np.ndarray  # w,x,y,z
-    dc: np.ndarray  # three DC SH coefficients, not RGB
-    opacity: np.ndarray  # already linear
-    centers: np.ndarray | None = None
-    sigmas: np.ndarray | None = None
-    velocities: np.ndarray | None = None
-    frame_ids: np.ndarray | None = None
-    sh_palette: np.ndarray | None = None  # palette_count, additional_coefficients, RGB
-    sh_labels: np.ndarray | None = None
-    audio: bytes | None = None
-    metadata: dict = field(default_factory=dict)
-
-    @property
-    def count(self):
-        return len(self.positions)
-
-    @property
-    def attribute_bytes(self):
-        return sum(v.nbytes for v in vars(self).values() if isinstance(v, np.ndarray))
+from .model import Scene
 
 
 def _f32(values, label, positive=False):
@@ -187,15 +162,16 @@ def decode(source, *, include_audio=True, max_points=10_000_000, max_image_pixel
 def evaluate(scene, time):
     """Return positions and linear opacity at normalized time in [0,1]."""
     number(time, "time", 0, 1)
+    positions, opacity = np.asarray(scene.positions), np.asarray(scene.opacity)
     if scene.frame_ids is not None:
         n = scene.metadata["timeline"]["N"]
         selected = min(n-1, math.floor(time*n))
-        return scene.positions, scene.opacity*(scene.frame_ids == selected)
+        return positions, opacity*(np.asarray(scene.frame_ids) == selected)
     if scene.centers is None:
-        return scene.positions, scene.opacity
-    dt = time-scene.centers
-    positions = scene.positions if scene.velocities is None else scene.positions+scene.velocities*dt[:, None]
-    opacity = scene.opacity*np.exp(-.5*np.square(dt/scene.sigmas))
+        return positions, opacity
+    dt = time-np.asarray(scene.centers)
+    positions = positions if scene.velocities is None else positions+np.asarray(scene.velocities)*dt[:, None]
+    opacity = opacity*np.exp(-.5*np.square(dt/np.asarray(scene.sigmas)))
     return positions, opacity
 
 
@@ -268,8 +244,8 @@ def encode(scene, destination, *, playback=None, codebooks=None, motion_bits=16,
     if ((alpha < 0) | (alpha > 1)).any():
         raise ValueError("Opacity must be linear in [0,1]")
     codebooks = codebooks or {}
-    meta = {"version": 4, "profile": dict(PROFILE), "count": count,
-            "asset": {"generator": "opsiclear-tsog 0.1.0"}}
+    meta = {"version": 1, "profile": dict(PROFILE), "count": count,
+            "asset": {"generator": "opsiclear-tsog 1.0.0"}}
     if playback is not None or "playback" in scene.metadata:
         meta["playback"] = dict(playback if playback is not None else scene.metadata["playback"])
     if "fps" in scene.metadata:

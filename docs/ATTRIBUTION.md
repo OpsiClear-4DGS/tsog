@@ -34,7 +34,10 @@ endorsed by Xiaomi, the authors or PlayCanvas. The separate
 [FTGS Player](https://github.com/OpsiClear-4DGS/ftgs-player) is AGPL-3.0-only;
 linking to its hosted demo does not put its source into this toolkit.
 
-## Installed dependencies
+## Optional codec and test dependencies
+
+The core library has no third-party runtime dependency. The `[codec]` extra
+installs NumPy and Pillow; `[test]` installs the schema test dependency.
 
 | Dependency | Purpose | License source |
 | --- | --- | --- |
