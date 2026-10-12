@@ -1,0 +1,10 @@
+include LICENSE NOTICE README.md
+include CITATION.cff CHANGELOG.md CONTRIBUTING.md examples/README.md
+recursive-include spec *.md *.json
+recursive-include docs *.md
+recursive-include web *.js
+recursive-include tests *.py *.txt
+recursive-include tools *.py
+recursive-include examples *.py *.html
+exclude examples/*.tsog
+exclude examples/slop-example.json

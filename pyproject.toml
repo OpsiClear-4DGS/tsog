@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opsiclear-tsog"
+version = "0.1.0"
+description = "Independent TSOG playback profile specification and vectorized reference codec"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "OpsiClear-4DGS" }]
+dependencies = ["numpy>=2,<3", "Pillow>=11,<13"]
+keywords = ["tsog", "4dgs", "gaussian-splatting", "sog", "freetimegs"]
+
+[project.optional-dependencies]
+test = ["jsonschema>=4,<5"]
+
+[project.urls]
+Repository = "https://github.com/OpsiClear-4DGS/tsog"
+Specification = "https://github.com/OpsiClear-4DGS/tsog/blob/main/spec/FORMAT.md"
+
+[project.scripts]
+tsog = "tsog.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

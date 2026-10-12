@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "Please credit the original TSOG research and this independent playback-profile implementation."
+title: "OpsiClear TSOG playback profile and reference codec"
+type: software
+version: 0.1.0
+date-released: 2026-10-12
+license: Apache-2.0
+repository-code: "https://github.com/OpsiClear-4DGS/tsog"
+authors:
+  - name: "OpsiClear-4DGS contributors"
+preferred-citation:
+  type: conference-paper
+  title: "TSOG: A Format For Temporally And Spatially Ordered Gaussians"
+  authors:
+    - family-names: Gmira
+      given-names: Shady
+    - family-names: Alexiou
+      given-names: Evangelos
+    - family-names: Potetsianakis
+      given-names: Emmanouil
+    - family-names: Thomas
+      given-names: Emmanuel
+  year: 2026
+  conference:
+    name: "IEEE International Conference on Image Processing (ICIP)"
+  doi: "10.48550/arXiv.2607.28049"
+  url: "https://arxiv.org/abs/2607.28049"

@@ -1,0 +1,30 @@
+OpsiClear TSOG
+Copyright 2026 OpsiClear-4DGS contributors
+
+This repository's specification, implementation, tests and code examples are
+licensed under the Apache License, Version 2.0.
+
+The base encoding is inspired by and interoperates with Xiaomi Research's
+TSOG project: https://github.com/xiaomi-research/tsog
+TSOG: A Format For Temporally And Spatially Ordered Gaussians
+Shady Gmira, Evangelos Alexiou, Emmanouil Potetsianakis, Emmanuel Thomas.
+ICIP 2026; https://arxiv.org/abs/2607.28049
+Reference format revision: a58102d0489a68c4f7e18e5e1ddaf613256417dd.
+That project's implementation is licensed under BSD-3-Clause-Clear.
+
+The spatial image conventions originate in PlayCanvas's SOG format:
+https://developer.playcanvas.com/user-manual/gaussian-splatting/formats/sog/
+PlayCanvas splat-transform is licensed under MIT.
+
+No source code from those implementations or from the AGPL FTGS Player is
+included. Attribution does not imply endorsement. This project is an
+independent playback profile and reference implementation, not the official
+Xiaomi or PlayCanvas project.
+
+examples/slop-example.tsog contains recorded/generated scene and audio data.
+Those assets retain their original rights and are excluded from the Apache
+license. See examples/README.md for provenance and permitted scope. No new
+commercial rights in the example media are granted by this repository.
+
+Runtime dependencies NumPy and Pillow retain their respective licenses.
+See docs/ATTRIBUTION.md.

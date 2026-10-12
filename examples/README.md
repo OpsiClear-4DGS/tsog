@@ -1,0 +1,34 @@
+# Slop Example and codec examples
+
+[Download Slop Example](slop-example.tsog) ·
+[Manifest / camera / checksum](slop-example.json) ·
+[Play the scene](https://opsiclear-4dgs.github.io/ftgs-player/examples/jensen-2m.html)
+
+The retained 2,000,000-point reconstruction contains degree-3 SH, 65,536 shared
+centroids, 121 source timestamps at 24 fps, five seconds of continuous animation
+and one embedded M4A track. Container size: **45,106,423 bytes**.
+
+```text
+SHA-256 df27dd645ebed2fd553973e4b0da8fcf2caf7138711a8e76910d61adacd33f05
+```
+
+It is byte-for-byte the previous `jensen-2m.tsog` from
+[sam3dbx4danyone](https://github.com/OpsiClear-4DGS/sam3dbx4danyone):
+Original Base36 Jensen, 2M zero-velocity cold initialization, original 1M
+movement units, fitting seed 2042; checkpoint checksum and study are in the
+manifest. Slop Example is its display name. The source dataset name is retained
+for reproducible provenance.
+
+This is generated multiview reconstruction data, not a captured physical ground
+truth or reference geometry. Its media and audio retain original rights;
+**no Apache media license or commercial clearance is granted**. The example is
+excluded from library distributions. Apache-2.0 covers the code examples below.
+
+| Example | Purpose |
+| --- | --- |
+| [encode.py](encode.py) | Write a continuous synthetic scene with vectorized quantization |
+| [decode.py](decode.py) | Read compact arrays and evaluate one normalized time |
+| [browser.html](browser.html) | Native browser ZIP/WebP decode in a module worker |
+
+The browser example is a codec demonstration, not a second player. Use the
+separate FTGS Player link above to inspect the full 4D scene.

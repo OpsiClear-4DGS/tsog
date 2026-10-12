@@ -1,0 +1,49 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TSOG decoding example</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.6 system-ui, sans-serif; background: #121212; color: #e3e3e3; }
+    body { max-width: 760px; margin: 8vh auto; padding: 0 24px; }
+    h1 { font-size: 24px; font-weight: 500; }
+    a { color: #c4c4c4; }
+    button { font: inherit; padding: 8px 14px; border: 1px solid #555; border-radius: 6px; background: #222; color: inherit; cursor: pointer; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+    button:disabled { cursor: wait; opacity: .6; }
+  </style>
+</head>
+<body>
+  <h1>TSOG decoding example</h1>
+  <p>Decode the 45 MB Slop Example in a worker. Geometry, motion and shared SH
+  return as transferable arrays. This page demonstrates the codec.</p>
+  <button id="decode">Decode Slop Example</button>
+  <p><a href="https://opsiclear-4dgs.github.io/ftgs-player/examples/jensen-2m.html">Play the 4D scene ↗</a> · <a href="../spec/FORMAT.md">Specification</a></p>
+  <pre id="status" role="status">Ready</pre>
+  <script type="module">
+    const button = document.querySelector('#decode'), status = document.querySelector('#status');
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      const worker = new Worker(new URL('../web/decode-worker.js', import.meta.url), { type: 'module' });
+      const finish = () => { worker.terminate(); button.disabled = false; };
+      worker.onmessage = ({ data }) => {
+        if (data.stage) { status.textContent = `${data.stage}…`; return; }
+        if (data.error) status.textContent = `Failed: ${data.error}`;
+        else {
+          window.decodedExample = data.model;
+          status.textContent = JSON.stringify({ points: data.model.metadata.count,
+            decodeMilliseconds: Math.round(data.decodeMilliseconds),
+            attributeMB: (data.attributeBytes / 1e6).toFixed(1),
+            timeline: data.timing, audioBytes: data.model.audio?.size ?? 0,
+            shPalette: data.model.metadata.shN }, (key, value) => key === 'codebook' ? `${value.length} entries` : value, 2);
+        }
+        finish();
+      };
+      worker.onerror = event => { status.textContent = `Worker failed: ${event.message}`; finish(); };
+      worker.postMessage({ url: new URL('./slop-example.tsog', import.meta.url).href });
+    });
+  </script>
+</body>
+</html>

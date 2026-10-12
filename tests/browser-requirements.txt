@@ -1,0 +1,2 @@
+# Optional browser conformance tools; not runtime codec dependencies.
+playwright>=1.55,<2
