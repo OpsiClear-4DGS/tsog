@@ -37,6 +37,47 @@ class CodecTests(unittest.TestCase):
         np.testing.assert_allclose(position[0], result.positions[0]+np.array([1, -2, 3/255])*.25, rtol=1e-7)
         self.assertEqual(opacity[0], 0)
 
+    def test_all_quaternion_tags_and_writable_packed_attributes(self):
+        original = scene(degree=3)
+        original.quaternions[:] = 0
+        original.quaternions[np.arange(original.count), np.arange(original.count) % 4] = 1
+        path = self.root/"axis-rotations.tsog"
+        encode(original, path)
+        decoded = decode(path)
+        small = (2*128/255-1)/np.sqrt(2)
+        expected = np.full((original.count, 4), small)
+        expected[np.arange(original.count), np.arange(original.count) % 4] = np.sqrt(1-3*small*small)
+        expected /= np.linalg.norm(expected, axis=1)[:, None]
+        np.testing.assert_array_equal(decoded.quaternions, expected.astype(np.float32))
+        # Consumers may pass packed bytes to a native binding after decode returns.
+        for view in decoded.as_buffers(readonly=False).values():
+            self.assertTrue(view.c_contiguous)
+            self.assertFalse(view.readonly)
+            self.assertEqual(view.cast("B").nbytes, view.nbytes)
+
+    def test_unused_scale_extremes_are_ignored_but_used_extremes_fail(self):
+        meta, entries = analytic()
+        meta["scales"]["codebook"] += [1000, -1000]
+        decoded = decode(bundle(meta, entries))
+        np.testing.assert_allclose(decoded.scales[0], [.1, .2, .1], rtol=1e-7)
+        for index in (2, 3):
+            entries["scale.webp"] = webp([[0, index, 0, 255]])
+            with self.assertRaisesRegex(ValueError, "scale"):
+                decode(bundle(meta, entries))
+        path = self.root/"unused-extremes.tsog"
+        encode(scene(), path, codebooks={"scales": [np.log(.02), np.log(.06), 1000, -1000]})
+        self.assertTrue(np.isfinite(decode(path).scales).all())
+
+    def test_unused_position_overflow_is_ignored_but_used_overflow_fails(self):
+        meta, entries = analytic()
+        meta["means"]["maxs"][0] = 1000
+        decoded = decode(bundle(meta, entries))
+        self.assertAlmostEqual(float(decoded.positions[0, 0]), -np.expm1(1), delta=1e-7)
+        entries["lo.webp"] = webp([[255, 0, 255, 255]])
+        entries["hi.webp"] = webp([[255, 0, 255, 255]])
+        with self.assertRaisesRegex(ValueError, "position"):
+            decode(bundle(meta, entries))
+
     def test_continuous_roundtrip_both_motion_depths_and_all_sh_degrees(self):
         for bits in (8, 16):
             for degree in range(4):

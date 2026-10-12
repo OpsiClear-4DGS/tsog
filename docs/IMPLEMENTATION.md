@@ -176,6 +176,10 @@ It copies raw texels directly, without premultiplication or shader color changes
 ## Optimization boundaries
 
 - Precompute inverse position values for each 16-bit code per axis, not per point.
+- Evaluate scale codebooks and linear ranges once, using float64 calculations
+  and float32 output tables; validate the values actually used by the scene.
+- Assemble only used image channels in place, and avoid redundant image copies
+  or repeated archive reads. Decoded attributes retain writable packed storage.
 - Keep SH labels and the shared palette. The Slop Example uses about 167.8 MB
   for all decoded arrays; expanding its 45 AC floats per point alone needs 360 MB.
 - Decode only a pair/group of source images at a time; release temporary raw pixels.

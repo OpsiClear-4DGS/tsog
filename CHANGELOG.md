@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Optimize Python decoding with smaller lookup tables, fewer image copies,
+  in-place byte assembly and a single read of the SH centroid image.
+- Reduce Python encoder scale-validation work and avoid unrelated image-plugin
+  initialization. Quantization, compression defaults and file version 1 remain
+  unchanged.
+- Verify bit-identical decoded/evaluated values and encoded payloads against
+  the released implementation; extend numerical-boundary and buffer checks.
+
 ## 1.0.0 — 2026-10-12
 
 - Establish the independent Apache-2.0 format repository.

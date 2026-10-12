@@ -14,11 +14,14 @@ import json
 import zipfile
 
 import numpy as np
-from PIL import Image
+# Register WebP directly so reading TSOG does not load unrelated image plugins.
+from PIL import Image, WebPImagePlugin
 
 from .archive import Archive, webp_dimensions
 from .metadata import PROFILE, MAX_FLOAT, validate_metadata, number, audio_mime
 from .model import Scene
+
+_QUAT_COMPONENTS = (2*np.arange(256, dtype=np.float64)/255-1)/math.sqrt(2)
 
 
 def _f32(values, label, positive=False):
@@ -48,16 +51,14 @@ def _check_covariance(scales, quaternions):
 def _quaternions(pixels):
     if (pixels[:, 3] < 252).any():
         raise ValueError("Invalid smallest-three quaternion tag")
-    kept = (2*pixels[:, :3].astype(np.float64)/255-1)/math.sqrt(2)
+    kept = _QUAT_COMPONENTS[pixels[:, :3]]
     omitted = pixels[:, 3]-252
     missing = np.sqrt(np.maximum(0, 1-np.square(kept).sum(axis=1)))
     values = np.empty((len(pixels), 4), np.float64)
-    rows = np.arange(len(pixels))
-    for component in range(4):
-        is_missing = omitted == component
-        values[is_missing, component] = missing[is_missing]
-        others = ~is_missing
-        values[others, component] = kept[rows[others], component-(omitted[others] < component)]
+    values[:, 0] = np.where(omitted == 0, missing, kept[:, 0])
+    values[:, 1] = np.where(omitted == 1, missing, np.where(omitted < 1, kept[:, 0], kept[:, 1]))
+    values[:, 2] = np.where(omitted == 2, missing, np.where(omitted < 2, kept[:, 1], kept[:, 2]))
+    values[:, 3] = np.where(omitted == 3, missing, kept[:, 2])
     values /= np.linalg.norm(values, axis=1)[:, None]
     return _f32(values, "quaternion")
 
@@ -71,45 +72,64 @@ def decode(source, *, include_audio=True, max_points=10_000_000, max_image_pixel
             raise ValueError("Device/resource limit: point count exceeds max_points")
         shape = None
 
-        def image(name, per_point=True):
+        def image(name, per_point=True, expected=None):
             nonlocal shape
             data = archive.read(name)
             dimensions = webp_dimensions(data)
             w, h = dimensions
             if w*h > max_image_pixels:
                 raise ValueError("Device/resource limit: decoded image is too large")
+            if expected is not None and dimensions != expected:
+                raise ValueError("SH centroid image dimension mismatch")
             if per_point:
                 if w*h < count or shape is not None and shape != dimensions:
                     raise ValueError("Per-Gaussian image dimension mismatch")
                 shape = dimensions
-            with Image.open(BytesIO(data)) as im:
+            with Image.open(BytesIO(data), formats=(WebPImagePlugin.WebPImageFile.format,)) as im:
                 if im.size != dimensions:
                     raise ValueError("Decoded WebP size mismatch")
                 # libwebp/Pillow supplies unassociated RGBA, including zero-alpha RGB.
-                pixels = np.asarray(im.convert("RGBA"), dtype=np.uint8).reshape(-1, 4).copy()
+                # The array retains its immutable byte owner after the image closes.
+                pixels = np.asarray(im if im.mode == "RGBA" else im.convert("RGBA"), dtype=np.uint8).reshape(-1, 4)
             return pixels[:count] if per_point else pixels
 
-        def codes(group):
-            low = image(group["files"][0]).astype(np.uint16)
-            return low if len(group["files"]) == 1 else low + 256*image(group["files"][1]).astype(np.uint16)
+        def codes(group, channels):
+            low = image(group["files"][0])[:, :channels]
+            if len(group["files"]) == 1:
+                return low
+            low = low.astype(np.uint16)
+            high = image(group["files"][1])[:, :channels].astype(np.uint16)
+            high <<= 8
+            low |= high
+            return low
 
         def indexed(pixels, book, label):
             if pixels.size and int(pixels.max()) >= len(book):
                 raise ValueError(f"{label}: codebook index out of range")
-            return np.asarray(book, dtype=np.float64)[pixels]
+            # Cast the small book before gathering millions of float32 outputs.
+            # Callers validate used values; unused scale entries may overflow.
+            return np.asarray(book, dtype=np.float32)[pixels]
 
-        encoded = codes(meta["means"])
+        unit16 = np.arange(65536, dtype=np.float64)/65535
+
+        def linear(code, lo, hi, label, unit=unit16, positive=False):
+            with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+                table = np.asarray(lo+(hi-lo)*unit, dtype=np.float32)
+            return _f32(table[code], label, positive)
+
+        encoded = codes(meta["means"], 3)
         positions = np.empty((count, 3), np.float32)
         for axis in range(3):
             lo, hi = meta["means"]["mins"][axis], meta["means"]["maxs"][axis]
-            domain = lo+(hi-lo)*(np.arange(65536, dtype=np.float64)/65535)
+            domain = lo+(hi-lo)*unit16
             with np.errstate(over="ignore", invalid="ignore"):
-                table = np.sign(domain)*np.expm1(np.abs(domain))
+                table = np.asarray(np.sign(domain)*np.expm1(np.abs(domain)), dtype=np.float32)
             # Only used values must be representable; unused LUT extremes can overflow.
             positions[:, axis] = _f32(table[encoded[:, axis]], "position")
         del encoded
-        with np.errstate(over="ignore", under="ignore"):
-            scales = _f32(np.exp(indexed(image(meta["scales"]["files"][0])[:, :3], meta["scales"]["codebook"], "scale")), "scale", True)
+        with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+            scale_book = np.exp(np.asarray(meta["scales"]["codebook"], dtype=np.float64))
+            scales = _f32(indexed(image(meta["scales"]["files"][0])[:, :3], scale_book, "scale"), "scale", True)
         pixels = image(meta["quats"]["files"][0])
         quaternions = np.empty((count, 4), np.float32)
         for start in range(0, count, 65536):
@@ -118,24 +138,26 @@ def decode(source, *, include_audio=True, max_points=10_000_000, max_image_pixel
         del pixels
         sh0 = image(meta["sh0"]["files"][0])
         dc = _f32(indexed(sh0[:, :3], meta["sh0"]["codebook"], "DC"), "DC")
-        opacity = sh0[:, 3].astype(np.float32)/255
+        opacity = sh0[:, 3].astype(np.float32)
+        opacity /= 255
+        del sh0
         scene = Scene(positions, scales, quaternions, dc, opacity, metadata=meta)
         if "timeline" in meta:
             group = meta["timeline"]
-            q = codes(group)
+            q = codes(group, 1 if group["type"] == 0 else 2)
             if group["type"] == 0:
                 scene.frame_ids = np.minimum(group["N"]-1, q[:, 0]//group["delta"]).astype(np.uint16)
             else:
-                decoded = np.asarray(group["mins"])+(np.asarray(group["maxs"])-group["mins"])*(q[:, :2].astype(np.float64)/65535)
-                scene.centers = _f32(decoded[:, 0], "center")
-                scene.sigmas = _f32(decoded[:, 1], "sigma", True)
+                scene.centers = linear(q[:, 0], group["mins"][0], group["maxs"][0], "center")
+                scene.sigmas = linear(q[:, 1], group["mins"][1], group["maxs"][1], "sigma", positive=True)
             del q
         if "temporal" in meta:
             group = meta["temporal"]["means"]
-            q = codes(group)
-            maximum = 255 if len(group["files"]) == 1 else 65535
-            values = np.asarray(group["mins"][0])+(np.asarray(group["maxs"][0])-group["mins"][0])*(q[:, :3].astype(np.float64)/maximum)
-            velocity = _f32(values, "velocity")
+            q = codes(group, 3)
+            unit = np.arange(256, dtype=np.float64)/255 if len(group["files"]) == 1 else unit16
+            velocity = np.empty((count, 3), np.float32)
+            for axis in range(3):
+                velocity[:, axis] = linear(q[:, axis], group["mins"][0][axis], group["maxs"][0][axis], "velocity", unit)
             if scene.centers is not None:
                 scene.velocities = velocity
             del q, velocity
@@ -143,15 +165,15 @@ def decode(source, *, include_audio=True, max_points=10_000_000, max_image_pixel
             group = meta["shN"]
             k = (int(group["bands"])+1)**2-1
             palette_count = int(group["count"])
-            data = archive.read(group["files"][0])
-            if webp_dimensions(data) != (64*k, math.ceil(palette_count/64)):
-                raise ValueError("SH centroid image dimension mismatch")
-            palette = image(group["files"][0], False)[:palette_count*k, :3]
+            palette = image(group["files"][0], False, expected=(64*k, math.ceil(palette_count/64)))[:palette_count*k, :3]
             scene.sh_palette = _f32(indexed(palette, group["codebook"], "SH palette"), "SH palette").reshape(palette_count, k, 3)
-            label_pixels = image(group["files"][1]).astype(np.uint16)
-            scene.sh_labels = label_pixels[:, 0]+256*label_pixels[:, 1]
+            label_pixels = image(group["files"][1])
+            scene.sh_labels = label_pixels[:, 1].astype(np.uint16)
+            scene.sh_labels <<= 8
+            scene.sh_labels |= label_pixels[:, 0]
             if (scene.sh_labels >= group["count"]).any():
                 raise ValueError("SH palette label out of range")
+            del palette, label_pixels
         if "audio" in meta:
             # Consume and CRC-check audio even if the caller does not retain it.
             track = archive.read(meta["audio"]["file"], 128*1048576)
@@ -283,8 +305,9 @@ def encode(scene, destination, *, playback=None, codebooks=None, motion_bits=16,
 
             meta["means"] = ranged("means", np.sign(positions)*np.log1p(np.abs(positions)))
             indices, book = _book(np.log(scales), codebooks.get("scales"))
-            with np.errstate(over="ignore", under="ignore"):
-                decoded_scales = _f32(np.exp(np.asarray(book)[indices]), "quantized scale", True)
+            with np.errstate(over="ignore", under="ignore", invalid="ignore"):
+                scale_book = np.exp(np.asarray(book, dtype=np.float64)).astype(np.float32)
+                decoded_scales = _f32(scale_book[indices], "quantized scale", True)
             meta["scales"] = {"codebook": book, "files": ["scales.webp"]}
             emit("scales.webp", indices)
             omitted = np.argmax(np.abs(rotations), axis=1)
