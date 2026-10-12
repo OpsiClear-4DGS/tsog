@@ -4,6 +4,12 @@ Copyright 2026 OpsiClear-4DGS contributors
 This repository's specification, implementation, tests and code examples are
 licensed under the Apache License, Version 2.0.
 
+The dynamic Gaussian representation used in the example reconstruction is
+credited to the original FreeTimeGS authors: Yifan Wang, Peishan Yang, Zhen Xu,
+Jiaming Sun, Zhanhua Zhang, Yong Chen, Hujun Bao, Sida Peng and Xiaowei Zhou.
+CVPR 2025; https://zju3dv.github.io/freetimegs/
+Paper: https://arxiv.org/abs/2506.05348
+
 The base encoding is inspired by and interoperates with Xiaomi Research's
 TSOG project: https://github.com/xiaomi-research/tsog
 TSOG: A Format For Temporally And Spatially Ordered Gaussians
@@ -15,6 +21,9 @@ That project's implementation is licensed under BSD-3-Clause-Clear.
 The spatial image conventions originate in PlayCanvas's SOG format:
 https://developer.playcanvas.com/user-manual/gaussian-splatting/formats/sog/
 PlayCanvas splat-transform is licensed under MIT.
+
+We thank the FreeTimeGS and TSOG authors, and the PlayCanvas team and
+contributors, for making their research, tools and documentation available.
 
 No source code from those implementations or from the AGPL FTGS Player is
 included. Attribution does not imply endorsement. This project is an

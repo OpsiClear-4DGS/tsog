@@ -4,6 +4,11 @@
 [Manifest / camera / checksum](slop-example.json) ·
 [Play the scene](https://opsiclear-4dgs.github.io/ftgs-player/examples/jensen-2m.html)
 
+The source video was generated with Grok using a few prompts, then reconstructed
+into 4DGS through our
+[4Danyone pipeline](https://github.com/OpsiClear-4DGS/sam3dbx4danyone).
+Hope Jensen is okay with it.
+
 The retained 2,000,000-point reconstruction contains degree-3 SH, 65,536 shared
 centroids, 121 source timestamps at 24 fps, five seconds of continuous animation
 and one embedded M4A track. Container size: **45,106,423 bytes**.

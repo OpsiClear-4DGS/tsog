@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "Please credit the original TSOG research and this independent playback-profile implementation."
+message: "Please credit the original FreeTimeGS and TSOG research, PlayCanvas tools, and this independent playback-profile implementation."
 title: "OpsiClear TSOG playback profile and reference codec"
 type: software
 version: 0.1.0
@@ -25,3 +25,37 @@ preferred-citation:
     name: "IEEE International Conference on Image Processing (ICIP)"
   doi: "10.48550/arXiv.2607.28049"
   url: "https://arxiv.org/abs/2607.28049"
+references:
+  - type: conference-paper
+    title: "FreeTimeGS: Free Gaussian Primitives at Anytime and Anywhere for Dynamic Scene Reconstruction"
+    authors:
+      - family-names: Wang
+        given-names: Yifan
+      - family-names: Yang
+        given-names: Peishan
+      - family-names: Xu
+        given-names: Zhen
+      - family-names: Sun
+        given-names: Jiaming
+      - family-names: Zhang
+        given-names: Zhanhua
+      - family-names: Chen
+        given-names: Yong
+      - family-names: Bao
+        given-names: Hujun
+      - family-names: Peng
+        given-names: Sida
+      - family-names: Zhou
+        given-names: Xiaowei
+    year: 2025
+    conference:
+      name: "IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)"
+    doi: "10.48550/arXiv.2506.05348"
+    url: "https://zju3dv.github.io/freetimegs/"
+  - type: software
+    title: "PlayCanvas SplatTransform"
+    authors:
+      - name: "PlayCanvas and contributors"
+    repository-code: "https://github.com/playcanvas/splat-transform"
+    url: "https://developer.playcanvas.com/user-manual/gaussian-splatting/formats/sog/"
+    license: MIT

@@ -4,6 +4,17 @@ The new specification, codecs, tests, examples of code and tooling in this
 repository are Apache-2.0. The complete license and attribution are in
 [LICENSE](../LICENSE) and [NOTICE](../NOTICE).
 
+## Original research and tools
+
+We thank the original FreeTimeGS and TSOG authors and the PlayCanvas team for
+sharing the research, implementations and documentation behind this project.
+
+**[FreeTimeGS](https://zju3dv.github.io/freetimegs/)**, CVPR 2025, is the work of
+**Yifan Wang, Peishan Yang, Zhen Xu, Jiaming Sun, Zhanhua Zhang, Yong Chen,
+Hujun Bao, Sida Peng and Xiaowei Zhou**. Its dynamic Gaussian representation
+underlies the example reconstruction.
+[Original paper](https://arxiv.org/abs/2506.05348).
+
 The file format was introduced by **Shady Gmira, Evangelos Alexiou, Emmanouil
 Potetsianakis and Emmanuel Thomas** at **Xiaomi Research** in
 [TSOG: A Format For Temporally And Spatially Ordered Gaussians](https://arxiv.org/abs/2607.28049),
@@ -38,8 +49,10 @@ font or UI code is included.
 
 ## Recorded media
 
-The example model is a preserved reconstruction from generated multiview media,
-with its original audio. No ownership or commercial clearance of that media is
+The example started as a video generated with Grok using a few prompts. Our
+[4Danyone pipeline](https://github.com/OpsiClear-4DGS/sam3dbx4danyone) produced
+the multiview inputs and reconstructed the scene into 4DGS. The preserved model
+includes its original audio. No ownership or commercial clearance of that media is
 asserted. Its filename/display label does not change its source provenance.
 Its bytes and manifest are outside the Apache code license; see
 [example provenance](../examples/README.md). The published Python wheel and sdist
